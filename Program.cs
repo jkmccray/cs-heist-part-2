@@ -20,7 +20,7 @@ namespace HeistPartII
             Muscle meathead = new Muscle()
             {
                 Name = "MeatHead",
-                SkillLevel = 27,
+                SkillLevel = 57,
                 PercentageCut = 15,
                 Index = i++
             };
@@ -28,7 +28,7 @@ namespace HeistPartII
             LockSpecialist alan = new LockSpecialist()
             {
                 Name = "Alan",
-                SkillLevel = 42,
+                SkillLevel = 72,
                 PercentageCut = 24,
                 Index = i++
             };
@@ -36,8 +36,8 @@ namespace HeistPartII
             Hacker burt = new Hacker()
             {
                 Name = "Burt",
-                SkillLevel = 34,
-                PercentageCut = 17,
+                SkillLevel = 64,
+                PercentageCut = 70,
                 Index = i++
 
             };
@@ -67,30 +67,30 @@ namespace HeistPartII
             Console.WriteLine($"Number of operatives in the rolodex: {rolodex.Count}");
 
             Console.Write("Enter name of a new possible crew member: ");
-            string newCrewMemberName = Console.ReadLine();
+            string newRolodexEntryName = Console.ReadLine();
 
-            while (newCrewMemberName != "")
+            while (newRolodexEntryName != "")
             {
                 Console.WriteLine("Select a Specialty:");
                 Console.WriteLine("1. Hacker (Disables alarms)");
                 Console.WriteLine("2. Muscle (Disarms guards)");
                 Console.WriteLine("3. Lock Specialist (Cracks vault)");
-                int newCrewMemberSpecialty = int.Parse(Console.ReadLine());
+                int newRolodexEntrySpecialty = int.Parse(Console.ReadLine());
 
                 Console.Write("Enter the crew member's skill level (between 1 and 100): ");
-                int newCrewMemberSkillLevel = int.Parse(Console.ReadLine());
+                int newRolodexEntrySkillLevel = int.Parse(Console.ReadLine());
 
                 Console.Write("Enter the crew member's demand for percentage cut: ");
-                int newCrewMemberPercentageCut = int.Parse(Console.ReadLine());
+                int newRolodexEntryPercentageCut = int.Parse(Console.ReadLine());
 
-                switch (newCrewMemberSpecialty)
+                switch (newRolodexEntrySpecialty)
                 {
                     case 1:
                         Hacker addedHacker = new Hacker()
                         {
-                            Name = newCrewMemberName,
-                            SkillLevel = newCrewMemberSkillLevel,
-                            PercentageCut = newCrewMemberPercentageCut,
+                            Name = newRolodexEntryName,
+                            SkillLevel = newRolodexEntrySkillLevel,
+                            PercentageCut = newRolodexEntryPercentageCut,
                             Index = i++
                         };
                         rolodex.Add(addedHacker);
@@ -98,9 +98,9 @@ namespace HeistPartII
                     case 2:
                         Muscle addedMuscle = new Muscle()
                         {
-                            Name = newCrewMemberName,
-                            SkillLevel = newCrewMemberSkillLevel,
-                            PercentageCut = newCrewMemberPercentageCut,
+                            Name = newRolodexEntryName,
+                            SkillLevel = newRolodexEntrySkillLevel,
+                            PercentageCut = newRolodexEntryPercentageCut,
                             Index = i++
                         };
                         rolodex.Add(addedMuscle);
@@ -108,9 +108,9 @@ namespace HeistPartII
                     case 3:
                         LockSpecialist addedLockSpecialist = new LockSpecialist()
                         {
-                            Name = newCrewMemberName,
-                            SkillLevel = newCrewMemberSkillLevel,
-                            PercentageCut = newCrewMemberPercentageCut,
+                            Name = newRolodexEntryName,
+                            SkillLevel = newRolodexEntrySkillLevel,
+                            PercentageCut = newRolodexEntryPercentageCut,
                             Index = i++
                         };
                         rolodex.Add(addedLockSpecialist);
@@ -118,7 +118,7 @@ namespace HeistPartII
                 }
 
                 Console.Write("Enter another potential crew member name: ");
-                newCrewMemberName = Console.ReadLine();
+                newRolodexEntryName = Console.ReadLine();
             }
 
             Random randomNumberGenerator = new Random();
@@ -161,15 +161,56 @@ namespace HeistPartII
             Console.Write("Select a robber to add to the crew: ");
             string crewMemberNumberSelected = Console.ReadLine();
 
-            while (crewMemberNumberSelected != "")
+            int percentageLeft = 100;
+
+            while (crewMemberNumberSelected != "" && percentageLeft > 0)
             {
                 IRobber crewMemberToBeAdded = rolodex.First(robber => robber.Index == int.Parse(crewMemberNumberSelected));
-                
+                percentageLeft -= crewMemberToBeAdded.PercentageCut;
 
                 crew.Add(crewMemberToBeAdded);
 
-                Console.Write("Select another robber to add to the crew: ");
-                crewMemberNumberSelected = Console.ReadLine();
+                List<IRobber> filteredRolodex = rolodex
+                .Where(robber => robber.PercentageCut <= percentageLeft)
+                .Where(robber => !crew.Contains(robber))
+                .ToList();
+
+                foreach (IRobber robber in filteredRolodex)
+                {
+                    Console.WriteLine($"{robber.Index}. {robber.Name}");
+                    Console.WriteLine($"Specialty: {robber.Specialty}");
+                    Console.WriteLine($"Skill Level: {robber.SkillLevel}");
+                    Console.WriteLine($"Percentage Cut: {robber.PercentageCut}");
+                    Console.WriteLine("--------------------------------------------------");
+                }
+
+                if (filteredRolodex.Count > 0)
+                {
+                    Console.Write("Select another robber to add to the crew: ");
+                    crewMemberNumberSelected = Console.ReadLine();
+                }
+            }
+
+            foreach (IRobber robber in crew)
+            {
+                robber.PerformSkill(bankTarget);
+            }
+
+            if (bankTarget.IsSecure)
+            {
+                Console.WriteLine("The heist failed!");
+            }
+            else
+            {
+                Console.WriteLine("The heist succeeded!");
+                int cashLeft = bankTarget.CashOnHand;
+                foreach(IRobber robber in crew)
+                {
+                    int robbersTake = bankTarget.CashOnHand*robber.PercentageCut/100;
+                    cashLeft -= robbersTake;
+                    Console.WriteLine($"{robber.Name} got {robbersTake}");
+                }
+                Console.WriteLine($"You get {cashLeft}");
             }
         }
     }
